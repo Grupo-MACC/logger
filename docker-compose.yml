@@ -1,0 +1,9 @@
+services:
+  logger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: logger
+    ports:
+      - "5000:6000"
+    restart: on-failure
