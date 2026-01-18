@@ -30,17 +30,10 @@ async def root():
         }
     }
 
-@router.get(
-    "/health",
-    summary="Health check endpoint",
-    response_model=schemas.Message,
-)
-async def health_check():
-    """Endpoint to check if everything started correctly."""
-    logger.debug("GET '/logs/private/health' endpoint called.")
-    return {
-        "detail": "OK"
-    }
+@router.get("/health", include_in_schema=False)
+async def health() -> dict:
+    """ Healthcheck LIVENESS (para Consul / balanceadores). """
+    return {"detail": "OK"}
 
 
 @router.get("/errors")

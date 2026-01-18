@@ -4,7 +4,7 @@ influxdb-client==1.40.0
 python-multipart==0.0.6
 httpx==0.26.0
 cryptography
-microservice-chassis-grupo2==0.1.19
+microservice-chassis-grupo2==2.0.0
 httpx
 pika
 aio_pika
