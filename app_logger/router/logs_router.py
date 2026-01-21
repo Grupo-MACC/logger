@@ -2,19 +2,56 @@ from fastapi import APIRouter, HTTPException, Query, Depends, Header
 from influxdb_client import InfluxDBClient
 from typing import Optional
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from consul_client import get_consul_client
 import os
 import logging
+import asyncio
 from sql import schemas
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/logs/private", tags=["logs"])
-INFLUX_URL = os.getenv("INFLUXDB_URL", "http://influxdb:8086")
+
+INFLUX_URL: Optional[str] = None
 INFLUX_TOKEN = os.getenv("INFLUXDB_TOKEN", "MY_CUSTOM_TOKEN_123456")
 INFLUX_ORG = os.getenv("INFLUXDB_ORG", "my-org")
 
-client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
-query_api = client.query_api()
+# Cache interno (simple)
+_influx_client: Optional[InfluxDBClient] = None
+_influx_query_api = None
+_influx_lock = asyncio.Lock()
+
+# client = InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
+# query_api = client.query_api()
+
+
+async def _get_query_api():
+    """
+    Devuelve query_api inicializado una sola vez.
+
+    - Resuelve INFLUX_URL vía Consul solo la primera vez.
+    - Crea InfluxDBClient solo la primera vez.
+    - Reutiliza el mismo query_api en llamadas posteriores.
+    """
+    global INFLUX_URL, _influx_client, _influx_query_api
+
+    if _influx_query_api is not None:
+        return _influx_query_api
+
+    async with _influx_lock:
+        if _influx_query_api is not None:
+            return _influx_query_api
+
+        # Aquí sí puedes usar await (ya estás dentro de una async def)
+        INFLUX_URL = await get_consul_client().get_service_base_url("logs_inf")
+
+        _influx_client = InfluxDBClient(
+            url=INFLUX_URL,
+            token=INFLUX_TOKEN,
+            org=INFLUX_ORG,
+        )
+        _influx_query_api = _influx_client.query_api()
+        return _influx_query_api
 
 @router.get("/")
 async def root():
@@ -62,6 +99,7 @@ async def get_errors(
           |> sort(columns: ["_time"], desc: true)
         '''
 
+        query_api = await _get_query_api()
         result = query_api.query(query)
 
         data = []
@@ -110,6 +148,7 @@ async def get_monitoring(
           |> sort(columns: ["_time"], desc: true)
         '''
 
+        query_api = await _get_query_api()
         result = query_api.query(query)
 
         data = []
@@ -151,6 +190,7 @@ async def get_debug(
           |> sort(columns: ["_time"], desc: true)
         '''
 
+        query_api = await _get_query_api()
         result = query_api.query(query)
 
         data = []

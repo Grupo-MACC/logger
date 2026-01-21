@@ -11,17 +11,13 @@ RUN pip install -r /requirements.txt
 # We will be working on this folder
 WORKDIR /home/pyuser/code
 ENV PYTHONPATH=/home/pyuser/code/app_logger
-ENV RABBITMQ_USER=guest
+ENV RABBITMQ_USER=user
 ENV RABBITMQ_PASSWORD=guest
 ENV RABBITMQ_HOST=rabbitmq
-ENV ORDER_SERVICE=https://order
-ENV MACHINE_SERVICE=https://machine
-ENV DELIVERY_SERVICE=https://delivery
-ENV PAYMENT_SERVICE=https://payment
-ENV AUTH_SERVICE=https://auth
-ENV INFLUXDB_URL=http://influxdb:8086
 ENV INFLUXDB_TOKEN=MY_CUSTOM_TOKEN_123456
 ENV INFLUXDB_ORG=my-org
+ENV CONSUL_HOST=10.1.11.40
+ENV CONSUL_PORT=8501
 
 # Create a non root user
 RUN useradd -u 1000 -d /home/pyuser -m pyuser && \
