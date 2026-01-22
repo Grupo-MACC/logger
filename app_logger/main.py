@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import os
 import asyncio
+import uvicorn
 from contextlib import asynccontextmanager
 
 # Import de router
@@ -54,5 +55,18 @@ app.include_router(router)
 # ===========================
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=6000)
+    """
+    Application entry point. Starts the Uvicorn server with SSL configuration.
+    Runs the FastAPI application on host.
+    """
+    cert_file = os.getenv("SERVICE_CERT_FILE", "/certs/logger/logger-cert.pem")
+    key_file = os.getenv("SERVICE_KEY_FILE", "/certs/logger/logger-key.pem")
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("SERVICE_PORT", "6000")),
+        reload=True,
+        ssl_certfile=cert_file,
+        ssl_keyfile=key_file,
+    )

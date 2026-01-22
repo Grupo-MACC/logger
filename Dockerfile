@@ -20,6 +20,10 @@ ENV INFLUXDB_ORG=my-org
 ENV CONSUL_HOST=10.1.11.40
 ENV CONSUL_PORT=8501
 
+ENV SERVICE_PORT=6000
+ENV SERVICE_CERT_FILE=/certs/logger/logger-cert.pem
+ENV SERVICE_KEY_FILE=/certs/logger/logger-key.pem
+
 # Create a non root user
 RUN useradd -u 1000 -d /home/pyuser -m pyuser && \
     chown -R pyuser:pyuser /home/pyuser
